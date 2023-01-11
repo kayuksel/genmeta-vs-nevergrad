@@ -1,4 +1,4 @@
-# genmeta-vs-nevergrad
+# GenMeta-vs-Nevergrad
 Comparison of Generative Meta-Learning vs Nevergrad  
 on the 30-dimensional Schwefel function optimization
 

@@ -143,7 +143,7 @@ def print_candidate_and_value(optimizer, candidate, value):
         best = reward
         print('nevergrad trial: %i loss: %f' % (epoch, best))
 
-optimizer = ng.optimizers.NGOpt(parametrization=args.funcd, budget=(args.iter+args.gradinit_iters) * args.batch)
+optimizer = ng.optimizers.NGOpt4(parametrization=args.funcd, budget=(args.iter+args.gradinit_iters) * args.batch)
 optimizer.register_callback("tell", print_candidate_and_value)
 recommendation = optimizer.minimize(schwefel_f)
 print(schwefel_f(recommendation.value))

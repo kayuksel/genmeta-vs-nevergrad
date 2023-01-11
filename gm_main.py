@@ -1,5 +1,5 @@
 from argparse import ArgumentParser
-import os, time
+import os, time, numpy
 parser = ArgumentParser(description='Input parameters for Generative Surprising Networks')
 parser.add_argument('--noise', default=16, type=int, help='Number of Noise Variables for GSN')
 parser.add_argument('--cnndim', default=2, type=int, help='Size of Latent Dimensions for GSN')
@@ -131,22 +131,35 @@ def schwefel_f(x):
     x = torch.from_numpy(x).cuda().float().unsqueeze(0)
     return schwefel(x).item()
 
-import nevergrad as ng
+inp = input('How many times you want to run Nevergrad? Press enter to exit.\n')
+try:
+    inp = int(inp)
+    import nevergrad as ng
 
-start = time.time()
-epoch = 0
-best = None
-def print_candidate_and_value(optimizer, candidate, value):
-    global epoch
-    global best
-    epoch += 1
-    reward = schwefel_f(candidate.value)
-    if best is None: best = reward
-    if reward < best:
-        best = reward
-        print('nevergrad trial: %i loss: %f time: %f' % (epoch, best, (time.time() - start)))
+    epoch = 0
+    best = None
 
-optimizer = ng.optimizers.NGOpt4(parametrization=args.funcd, budget=(args.iter+args.gradinit_iters) * args.batch)
-optimizer.register_callback("tell", print_candidate_and_value)
-recommendation = optimizer.minimize(schwefel_f)
-print(schwefel_f(recommendation.value))
+    def print_candidate_and_value(optimizer, candidate, value):
+        global epoch
+        global best
+        epoch += 1
+        reward = schwefel_f(candidate.value)
+        if best is None: best = reward
+        if reward < best:
+            best = reward
+            print('nevergrad trial: %i loss: %f time: %f' % (epoch, best, (time.time() - start)))
+
+    results = []
+
+    for i in range(inp):
+        epoch = 0
+        best = None
+        start = time.time()
+        optimizer = ng.optimizers.NGOpt4(parametrization=args.funcd, budget=(args.iter+args.gradinit_iters) * args.batch)
+        optimizer.register_callback("tell", print_candidate_and_value)
+        recommendation = optimizer.minimize(schwefel_f)
+        results.append(schwefel_f(recommendation.value))
+
+    print(numpy.mean(numpy.array(results)))
+except:
+    pass

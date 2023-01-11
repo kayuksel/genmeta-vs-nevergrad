@@ -6,7 +6,7 @@ The best results of both methods after 100K trials:
 gen-meta best_epoch: 99500 loss: **1.597656** time: 1.372849  
 ng-opt-4 best_epoch: 67590 loss: 476.789062 time: 63.584929 
 
-(average ngt-opt-4 loss after 10 repetitions: 314.32099609375)
+(average ng-opt-4 loss after 10 repetitions: 314.32099609375)
 
 Please note that, an experiment with several random  
 seeds is required to correctly compare both of them.

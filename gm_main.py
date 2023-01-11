@@ -1,5 +1,5 @@
 from argparse import ArgumentParser
-import os
+import os, time
 parser = ArgumentParser(description='Input parameters for Generative Surprising Networks')
 parser.add_argument('--noise', default=16, type=int, help='Number of Noise Variables for GSN')
 parser.add_argument('--cnndim', default=2, type=int, help='Size of Latent Dimensions for GSN')
@@ -107,6 +107,8 @@ def gradinit(net, args):
         gnorm.backward()
         optimizer.step()
 
+start = time.time()
+
 gradinit(actor, args)
 
 for epoch in range(args.iter):
@@ -123,7 +125,7 @@ for epoch in range(args.iter):
     with torch.no_grad():
         if rewards[min_index] > best_reward: continue
         best_reward = rewards[min_index]
-        print('gen-meta trial: %i loss: %f' % (args.batch*(args.gradinit_iters+epoch), best_reward.item()))
+        print('gen-meta trial: %i loss: %f time: %f' % (args.batch*(args.gradinit_iters+epoch), best_reward.item(), (time.time() - start)))
 
 def schwefel_f(x):
     x = torch.from_numpy(x).cuda().float().unsqueeze(0)
@@ -131,6 +133,7 @@ def schwefel_f(x):
 
 import nevergrad as ng
 
+start = time.time()
 epoch = 0
 best = None
 def print_candidate_and_value(optimizer, candidate, value):
@@ -141,7 +144,7 @@ def print_candidate_and_value(optimizer, candidate, value):
     if best is None: best = reward
     if reward < best:
         best = reward
-        print('nevergrad trial: %i loss: %f' % (epoch, best))
+        print('nevergrad trial: %i loss: %f time: %f' % (epoch, best, (time.time() - start)))
 
 optimizer = ng.optimizers.NGOpt4(parametrization=args.funcd, budget=(args.iter+args.gradinit_iters) * args.batch)
 optimizer.register_callback("tell", print_candidate_and_value)

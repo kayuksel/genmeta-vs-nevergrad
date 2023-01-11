@@ -123,7 +123,7 @@ for epoch in range(args.iter):
     with torch.no_grad():
         if rewards[min_index] > best_reward: continue
         best_reward = rewards[min_index]
-        print('gen-meta trial: %i loss: %f' % (epoch*args.batch, best_reward.item()))
+        print('gen-meta trial: %i loss: %f' % (args.batch*(args.gradinit_iters+epoch), best_reward.item()))
 
 def schwefel_f(x):
     x = torch.from_numpy(x).cuda().float().unsqueeze(0)

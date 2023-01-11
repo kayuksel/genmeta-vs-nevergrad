@@ -1,5 +1,5 @@
 # genmeta-vs-nevergrad
-Comparison of Generative Meta-Learning and Nevergrad  
+Comparison of Generative Meta-Learning vs Nevergrad  
 on the 30-dimensional Schwefel function optimization
 
 The best results of both methods after 100K trials:  

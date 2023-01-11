@@ -4,7 +4,7 @@ on the 30-dimensional Schwefel function optimization
 
 The best results of both methods after 100K trials:  
 gen-meta best_epoch: 99500 loss: 1.597656  
-ng-opt-4 best_epoch: 67368 loss: 0.001953
+ng-opt-4 best_epoch: 67473 loss: 593.709961
 
-Please note that GenMeta learns to optimize from  
-scratch, and it is scalable to 100K+ dimensions.
+Please note that, an experiment with several random  
+seeds is required to correctly compare both of them.

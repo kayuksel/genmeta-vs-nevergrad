@@ -100,7 +100,6 @@ def gradinit(net, args):
         init_loss = rewards.mean()
         all_grads = torch.autograd.grad(init_loss, params_list, create_graph=True)
         gnorm = sum([g.abs().sum() for g in all_grads])
-        loss_grads = all_grads
         optimizer.zero_grad()
         gnorm.backward()
         optimizer.step()

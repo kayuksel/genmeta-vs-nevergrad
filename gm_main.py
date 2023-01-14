@@ -4,7 +4,7 @@ parser = ArgumentParser(description='Input parameters for Generative Surprising 
 parser.add_argument('--noise', default=16, type=int, help='Number of Noise Variables for GSN')
 parser.add_argument('--cnndim', default=2, type=int, help='Size of Latent Dimensions for GSN')
 parser.add_argument('--funcd', default=30, type=int, help='Size of Schwefel Function Dimensions')
-parser.add_argument('--iter', default=150, type=int, help='Number of Total Iterations for Solver')
+parser.add_argument('--iter', default=2000, type=int, help='Number of Total Iterations for Solver')
 parser.add_argument('--batch', default=500, type=int, help='Number of Evaluations in an Iteration')
 parser.add_argument('--rseed', default=2, type=int, help='Random Seed for Network Initialization')
 # hyperparameters for GradInit
@@ -90,8 +90,7 @@ def gradinit(net, args):
     weight_params = [p for n, p in net.named_parameters() if 'weight' in n]
 
     optimizer = RescaleAdam([{'params': weight_params, 'min_scale': args.gradinit_min_scale, 'lr': args.gradinit_lr},
-                             {'params': bias_params, 'min_scale': 0, 'lr': args.gradinit_lr}],
-                             grad_clip=1.)
+                             {'params': bias_params, 'min_scale': 0, 'lr': args.gradinit_lr}], grad_clip=1.)
 
     params_list = get_ordered_params(net)
     for total_iters in range(args.gradinit_iters):
@@ -106,7 +105,8 @@ def gradinit(net, args):
 
 start = time.time()
 
-gradinit(actor, args)
+with torch.backends.cudnn.flags(enabled=False):
+    gradinit(actor, args)
 
 for epoch in range(args.iter):
     torch.cuda.empty_cache()

@@ -95,9 +95,7 @@ def gradinit(net, args):
 
     params_list = get_ordered_params(net)
     for total_iters in range(args.gradinit_iters):
-        init_inputs_0 = torch.randn((args.batch // 2, args.noise)).cuda().requires_grad_()
-        init_inputs_1 = torch.randn((args.batch // 2, args.noise)).cuda().requires_grad_()
-        init_inputs = torch.cat([init_inputs_0, init_inputs_1])
+        init_inputs = torch.randn((args.batch, args.noise)).cuda().requires_grad_()
         rewards = schwefel(net(init_inputs))
         init_loss = rewards.mean()
         all_grads = torch.autograd.grad(init_loss, params_list, create_graph=True)

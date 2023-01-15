@@ -4,7 +4,7 @@ parser = ArgumentParser(description='Input parameters for Generative Meta-Learni
 parser.add_argument('--noise', default=16, type=int, help='Number of Noise Variables for Gen-Meta')
 parser.add_argument('--cnndim', default=2, type=int, help='Size of Latent Dimensions for Gen-Meta')
 parser.add_argument('--funcd', default=100000, type=int, help='Size of Benchmark Function Dimensions')
-parser.add_argument('--iter', default=200, type=int, help='Number of Total Iterations for Solver')
+parser.add_argument('--iter', default=150, type=int, help='Number of Total Iterations for Solver')
 parser.add_argument('--batch', default=500, type=int, help='Number of Evaluations in an Iteration')
 parser.add_argument('--rseed', default=2, type=int, help='Random Seed for Network Initialization')
 # hyperparameters for GradInit

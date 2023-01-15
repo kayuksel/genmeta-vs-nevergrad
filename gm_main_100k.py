@@ -43,8 +43,7 @@ options = {
     "rastrigin": rastrigin,
     "ackley": ackley,
     "styblinski": styblinski,
-    "alpine": alpine
-}
+    "alpine": alpine}
 
 user_input = ''
 

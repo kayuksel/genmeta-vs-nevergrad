@@ -1,8 +1,8 @@
 from argparse import ArgumentParser
 import os, time, numpy
-parser = ArgumentParser(description='Input parameters for Generative Surprising Networks')
-parser.add_argument('--noise', default=16, type=int, help='Number of Noise Variables for GSN')
-parser.add_argument('--cnndim', default=2, type=int, help='Size of Latent Dimensions for GSN')
+parser = ArgumentParser(description='Input parameters for Generative Meta-Learning Optimizer')
+parser.add_argument('--noise', default=16, type=int, help='Number of Noise Variables for Gen-Meta')
+parser.add_argument('--cnndim', default=2, type=int, help='Size of Latent Dimensions for Gen-Meta')
 parser.add_argument('--funcd', default=30, type=int, help='Size of Schwefel Function Dimensions')
 parser.add_argument('--iter', default=2000, type=int, help='Number of Total Iterations for Solver')
 parser.add_argument('--batch', default=500, type=int, help='Number of Evaluations in an Iteration')
@@ -33,9 +33,30 @@ class Logish(nn.Module):
     def forward(self, x):
         return x * (1 + x.sigmoid()).log()
         
+def rastrigin(x, A=10):
+    x = x.tanh() * 5
+    return (x**2 - A * (2 * math.pi * x).cos()).sum(dim=1) + A * x.shape[1]
+
+def ackley(x, A=20):
+    x = x.tanh() * 5
+    x1 = -A * (-0.2 * (x.pow(2).mean(dim=1)).sqrt()).exp()
+    x2 = (2 * math.pi * x).cos().mean(dim=1).exp()
+    return x1 - x2 + A + 2.71828174591064453125
+
+# global minima: -39.16599 * x.shape[1]
+def styblinski(x):
+    x = x.tanh() * 5
+    return (x.pow(4) - 16 * x.pow(2) + 5 * x).sum(dim=1) / 2
+
+def alpine(x):
+    x = x.tanh() * 10
+    return (x * x.sin() + x / 10).sum(dim=1).abs()
+
 def schwefel(x):
     x = x.tanh() * 500
     return 418.9829 * x.shape[1] - (x * x.abs().sqrt().sin()).sum(dim=1)
+
+reward_func = schwefel
 
 class LSTMModule(nn.Module):
     def __init__(self, input_size = 1, hidden_size = 1, num_layers = 2):
@@ -95,7 +116,7 @@ def gradinit(net, args):
     params_list = get_ordered_params(net)
     for total_iters in range(args.gradinit_iters):
         init_inputs = torch.randn((args.batch, args.noise)).cuda().requires_grad_()
-        rewards = schwefel(net(init_inputs))
+        rewards = reward_func(net(init_inputs))
         init_loss = rewards.mean()
         all_grads = torch.autograd.grad(init_loss, params_list, create_graph=True)
         gnorm = sum([g.abs().sum() for g in all_grads])
@@ -112,7 +133,7 @@ for epoch in range(args.iter):
     torch.cuda.empty_cache()
     opt_A.zero_grad()
     z = torch.randn((args.batch, args.noise)).cuda().requires_grad_()
-    rewards =  schwefel(actor(z))
+    rewards =  reward_func(actor(z))
     min_index = rewards.argmin()
     if best_reward is None: best_reward = rewards[min_index]
     actor_loss = rewards.mean()
@@ -123,7 +144,6 @@ for epoch in range(args.iter):
         if rewards[min_index] > best_reward: continue
         best_reward = rewards[min_index]
         print('gen-meta trial: %i loss: %f time: %f' % (args.batch*(args.gradinit_iters+epoch), best_reward.item(), (time.time() - start)))
-
 def schwefel_f(x):
     x = torch.from_numpy(x).cuda().float().unsqueeze(0)
     return schwefel(x).item()

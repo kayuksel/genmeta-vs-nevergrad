@@ -4,7 +4,7 @@ parser = ArgumentParser(description='Input parameters for Generative Meta-Learni
 parser.add_argument('--noise', default=16, type=int, help='Number of Noise Variables for Gen-Meta')
 parser.add_argument('--cnndim', default=2, type=int, help='Size of Latent Dimensions for Gen-Meta')
 parser.add_argument('--funcd', default=30, type=int, help='Size of Schwefel Function Dimensions')
-parser.add_argument('--iter', default=2000, type=int, help='Number of Total Iterations for Solver')
+parser.add_argument('--iter', default=200, type=int, help='Number of Total Iterations for Solver')
 parser.add_argument('--batch', default=500, type=int, help='Number of Evaluations in an Iteration')
 parser.add_argument('--rseed', default=2, type=int, help='Random Seed for Network Initialization')
 # hyperparameters for GradInit
@@ -19,20 +19,6 @@ from gm_utils import *
 torch.backends.cudnn.deterministic = True
 torch.backends.cudnn.benchmark = False
 
-def init_weights(model):
-    for m in model.modules():
-        if isinstance(m, nn.BatchNorm1d):
-            m.weight.data.fill_(1)
-        elif isinstance(m, nn.Linear):
-            nn.init.xavier_uniform_(m.weight, gain = 5/3)
-        if hasattr(m, 'bias') and m.bias is not None: m.bias.data.zero_()
-
-class Logish(nn.Module):
-    def __init__(self):
-        super().__init__()
-    def forward(self, x):
-        return x * (1 + x.sigmoid()).log()
-        
 def rastrigin(x, A=10):
     x = x.tanh() * 5
     return (x**2 - A * (2 * math.pi * x).cos()).sum(dim=1) + A * x.shape[1]
@@ -57,6 +43,20 @@ def schwefel(x):
     return 418.9829 * x.shape[1] - (x * x.abs().sqrt().sin()).sum(dim=1)
 
 reward_func = schwefel
+
+def init_weights(model):
+    for m in model.modules():
+        if isinstance(m, nn.BatchNorm1d):
+            m.weight.data.fill_(1)
+        elif isinstance(m, nn.Linear):
+            nn.init.xavier_uniform_(m.weight, gain = 5/3)
+        if hasattr(m, 'bias') and m.bias is not None: m.bias.data.zero_()
+
+class Logish(nn.Module):
+    def __init__(self):
+        super().__init__()
+    def forward(self, x):
+        return x * (1 + x.sigmoid()).log()
 
 class LSTMModule(nn.Module):
     def __init__(self, input_size = 1, hidden_size = 1, num_layers = 2):
@@ -144,9 +144,10 @@ for epoch in range(args.iter):
         if rewards[min_index] > best_reward: continue
         best_reward = rewards[min_index]
         print('gen-meta trial: %i loss: %f time: %f' % (args.batch*(args.gradinit_iters+epoch), best_reward.item(), (time.time() - start)))
-def schwefel_f(x):
+
+def reward_ng(x):
     x = torch.from_numpy(x).cuda().float().unsqueeze(0)
-    return schwefel(x).item()
+    return reward_func(x).item()
 
 inp = input('How many times you want to run Nevergrad? Press enter to exit.\n')
 try:
@@ -160,7 +161,7 @@ try:
         global epoch
         global best
         epoch += 1
-        reward = schwefel_f(candidate.value)
+        reward = reward_ng(candidate.value)
         if best is None: best = reward
         if reward < best:
             best = reward
@@ -174,9 +175,9 @@ try:
         start = time.time()
         optimizer = ng.optimizers.NGOpt4(parametrization=args.funcd, budget=(args.iter+args.gradinit_iters) * args.batch)
         optimizer.register_callback("tell", print_candidate_and_value)
-        recommendation = optimizer.minimize(schwefel_f)
-        results.append(schwefel_f(recommendation.value))
+        recommendation = optimizer.minimize(reward_ng)
+        results.append(reward_ng(recommendation.value))
 
     print(numpy.mean(numpy.array(results)))
-except:
-    pass
+except Exception as e:
+    print(e)

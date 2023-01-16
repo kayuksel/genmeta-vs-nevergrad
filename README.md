@@ -16,7 +16,4 @@ seeds is required to correctly compare both of them.
 
 Solving math functions in high-dimensions: **gen_meta_100k.py**  
 Selecting portfolios for sparse index tracting (vs Fast CMA-ES):  
-https://github.com/kayuksel/generative-opt  
-
-Training RL agents with Gen-Meta optimization: **gen_meta_rl.py**   
-Best score achieved in Pendulum-v1 control problem: 131.882050
+https://github.com/kayuksel/generative-opt

@@ -15,5 +15,5 @@ seeds is required to correctly compare both of them.
 # GenMeta in RL
 
 Solving math functions in high-dimensions: **gen_meta_100k.py**  
-Training RL agents with Gen-Meta optimization: **gen_meta_rl.py** 
+Training RL agents with Gen-Meta optimization: **gen_meta_rl.py**   
 Best score achieved in Pendulum-v1 control problem: 131.882050

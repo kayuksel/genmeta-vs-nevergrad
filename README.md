@@ -14,5 +14,5 @@ seeds is required to correctly compare both of them.
 
 # GenMeta in RL
 
-**gen_meta_100k.py** Solving math functions in high-dimensions
+**gen_meta_100k.py** Solving math functions in high-dimensions  
 **gen_meta_rl.py** The application of Gen-Meta to RL problems

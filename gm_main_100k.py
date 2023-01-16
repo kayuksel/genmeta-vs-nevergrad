@@ -103,7 +103,7 @@ class Generator(nn.Module):
             *block(noise_dim+args.cnndim, 480), *block(480, 1103), nn.Linear(1103, args.funcd))
         init_weights(self)
         self.extract = Extractor(args.cnndim)
-        self.std_weight = nn.Parameter(torch.zeros(args.funcd).cuda()) # changing this for convenience of GradInit
+        self.std_weight = nn.Parameter(torch.zeros(args.funcd).cuda())
     def forward(self, x):
         mu = self.model(self.extract(x))
         return mu + (self.std_weight * torch.randn_like(mu))

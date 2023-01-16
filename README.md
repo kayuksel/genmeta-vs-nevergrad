@@ -12,8 +12,12 @@ average ng-opt-4 loss after 10 repetitions: 409.2259765
 Please note that, an experiment with several random  
 seeds is required to correctly compare both of them.
 
-# GenMeta in RL
+# GenMeta in RL, etc ...
 
 Solving math functions in high-dimensions: **gen_meta_100k.py**  
+Selecting portfolios for sparse index tracting (vs Fast CMA-ES):
+https://github.com/kayuksel/generative-opt
+
+
 Training RL agents with Gen-Meta optimization: **gen_meta_rl.py**   
 Best score achieved in Pendulum-v1 control problem: 131.882050

@@ -15,5 +15,6 @@ seeds is required to correctly compare both of them.
 # GenMeta in RL, QFin, etc ...
 
 Solving math functions in high-dimensions: **gen_meta_100k.py**  
+
 Selecting portfolios for sparse index tracting (vs Fast CMA-ES):  
 https://github.com/kayuksel/generative-opt

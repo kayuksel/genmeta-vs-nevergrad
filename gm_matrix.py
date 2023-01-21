@@ -16,6 +16,7 @@ from gm_utils import *
 torch.backends.cudnn.deterministic = True
 torch.backends.cudnn.benchmark = False
 from sklearn.metrics import f1_score
+from sklearn.metrics import ndcg_score
 from sklearn.manifold import TSNE
 import matplotlib.pyplot as plt
 from matplotlib.colors import Normalize
@@ -57,6 +58,13 @@ def reward_func(pop):
         recon_loss /= num_chunks
         rewards.append(recon_loss)
     return torch.stack(rewards)
+
+def ndcg_binary(targets):
+    k = targets.size(1)
+    dcg = (2 ** targets[:,:k] - 1).float() / torch.log2(torch.arange(1, k + 1) + 1).float()
+    idcg = (2 ** torch.sort(targets, descending=True)[0][:, :k] - 1).float() 
+    idcg /= torch.log2(torch.arange(1, k + 1) + 1).float()
+    return (dcg / idcg).nan_to_num(posinf=0.0).mean()
 
 def init_weights(model):
     for m in model.modules():
@@ -153,7 +161,7 @@ for epoch in range(args.iter):
         u_pop = row[-n_items*rank:].reshape(-1, rank).T
         recov = m_pop @ u_pop
 
-        k = data.sum(dim=1).mean().int()
+        k = 100
 
         recov, indices = torch.topk(recov, k, dim=1, largest=True, sorted=True)
         sorted_data = torch.gather(data, dim=1, index=indices)
@@ -161,7 +169,10 @@ for epoch in range(args.iter):
         recov = (recov.sigmoid() > 0.5).float()
         f1 = f1_score(sorted_data.flatten().cpu(), recov.flatten().cpu(), average='binary')
 
-        print('gen-meta epoch: %i bce: %f f1 @ %i: %f time: %f' % (epoch, best_reward.item(), k, f1, (time.time() - start)))
+        ndcg = ndcg_binary(sorted_data.cpu())
+
+        print('gen-meta epoch: %i bce: %f f1 @ %i: %f ncdg @ %i: %f time: %f' % (
+            epoch, best_reward.item(), k, f1, k, ndcg.item(), (time.time() - start)))
 
         if (epoch % 10) == 0:
             col = data.mean(dim=1) / data.std(dim=1)

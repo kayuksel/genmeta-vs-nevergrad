@@ -16,7 +16,7 @@ seeds is required to correctly compare both of them.
 
 Solving math functions in high-dimensions: **gen_meta_100k.py**  
 
-Matrix Factorization on MovieLens 100K data: **gen_matrix.py**  
+Matrix Factorization on MovieLens 1M dataset: **gen_matrix.py**  
 
 Selecting portfolios for sparse index tracting (vs Fast CMA-ES):  
 https://github.com/kayuksel/generative-opt

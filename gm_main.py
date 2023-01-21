@@ -1,5 +1,4 @@
 from argparse import ArgumentParser
-import os, time, numpy
 parser = ArgumentParser(description='Input parameters for Generative Meta-Learning Optimizer')
 parser.add_argument('--noise', default=16, type=int, help='Number of Noise Variables for Gen-Meta')
 parser.add_argument('--cnndim', default=2, type=int, help='Size of Latent Dimensions for Gen-Meta')
@@ -13,7 +12,7 @@ parser.add_argument('--gradinit_lr', default=1e-2, type=float, help='Step size o
 parser.add_argument('--gradinit_iters', default=50, type=int, help='Number of GradInit steps.')
 parser.add_argument('--gradinit_min_scale', default=1e-2, type=float, help='Set a lower bound for the scale factors')
 args = parser.parse_args()
-import torch
+import torch, time, numpy
 import torch.nn as nn
 from gm_utils import *
 torch.backends.cudnn.deterministic = True

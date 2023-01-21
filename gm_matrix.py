@@ -25,18 +25,20 @@ tsne = TSNE(n_components=2,  init='pca', learning_rate = 'auto', metric = 'cosin
 
 ratings_df = pd.read_csv("ratings.dat", sep="::", header=None, names=["userId", "movieId", "rating", "timestamp"], engine='python')
 
-n_users = ratings_df['userId'].nunique()
-n_items = ratings_df['movieId'].max()
-rank = 50
-args.funcd = (n_users + n_items) * rank
-print(args.funcd)
-
-data = np.zeros((n_users, n_items))
+data = np.zeros((ratings_df['userId'].nunique(), ratings_df['movieId'].max()))
 for row in ratings_df.itertuples():
     data[row[1]-1, row[2]-1] = 1
 
 data = torch.from_numpy(data).float().cuda()
 data = data[~(data==0).all(axis=1)]
+data = data.unique(dim=1)
+n_users = data.shape[0]
+n_items = data.shape[1]
+
+rank = 50
+args.funcd = (n_users + n_items) * rank
+print(args.funcd)
+
 bs = 512
 num_chunks = math.ceil(len(data) / bs)
 pos_weight = (1.0-data.mean()) / data.mean() 

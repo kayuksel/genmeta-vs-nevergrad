@@ -141,8 +141,6 @@ best_reward = None
 
 start = time.time()
 
-from entmax import sparsemax
-
 for epoch in range(args.iter):
     torch.cuda.empty_cache()
     opt_A.zero_grad()

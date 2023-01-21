@@ -157,4 +157,4 @@ for epoch in range(args.iter):
         # calculate the weighted F1 score
         f1 = f1_score(data.flatten().cpu(), recov.flatten().cpu(), average='binary')
 
-        print('gen-meta epoch: %i loss: %f f1: %f time: %f' % (epoch, best_reward.item(), f1, (time.time() - start)))
+        print('gen-meta epoch: %i bce: %f f1: %f time: %f' % (epoch, best_reward.item(), f1, (time.time() - start)))

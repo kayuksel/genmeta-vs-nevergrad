@@ -1,4 +1,4 @@
-import time, math
+import os, time, math
 import pandas as pd
 import numpy as np
 from argparse import ArgumentParser
@@ -7,7 +7,7 @@ parser.add_argument('--noise', default=16, type=int, help='Number of Noise Varia
 parser.add_argument('--cnndim', default=2, type=int, help='Size of Latent Dimensions for Gen-Meta')
 parser.add_argument('--funcd', default=100000, type=int, help='Size of Benchmark Function Dimensions')
 parser.add_argument('--iter', default=150, type=int, help='Number of Total Iterations for Solver')
-parser.add_argument('--batch', default=128, type=int, help='Number of Evaluations in an Iteration')
+parser.add_argument('--batch', default=64, type=int, help='Number of Evaluations in an Iteration')
 parser.add_argument('--rseed', default=2, type=int, help='Random Seed for Network Initialization')
 args = parser.parse_args()
 import torch
@@ -22,7 +22,7 @@ ratings_df = pd.read_csv("ratings.dat", sep="::", header=None, names=["userId", 
 # Create a binary matrix where 1 indicates that a movie has been watched and 0 otherwise
 n_users = ratings_df['userId'].nunique()
 n_items = ratings_df['movieId'].max()
-rank = 50
+rank = 64
 args.funcd = (n_users + n_items) * rank
 
 print(n_users)
@@ -146,7 +146,6 @@ for epoch in range(args.iter):
     with torch.no_grad():
         if rewards[min_index] > best_reward: continue
         best_reward = rewards[min_index]
-        print('gen-meta epoch: %i loss: %f time: %f' % (epoch, best_reward.item(), (time.time() - start)))
 
         row = action[min_index]
 
@@ -158,4 +157,4 @@ for epoch in range(args.iter):
         # calculate the weighted F1 score
         f1 = f1_score(data.flatten().cpu(), recov.flatten().cpu(), average='binary')
 
-        print(f1)
+        print('gen-meta epoch: %i loss: %f f1: %f time: %f' % (epoch, best_reward.item(), f1, (time.time() - start)))

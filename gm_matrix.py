@@ -35,7 +35,8 @@ for row in ratings_df.itertuples():
 
 data = torch.from_numpy(data).float().cuda()
 data = data[~(data==0).all(axis=1)]
-num_chunks = math.ceil(len(data) / 512)
+bs = 512
+num_chunks = math.ceil(len(data) / bs)
 pos_weight = (1.0-data.mean()) / data.mean() 
 
 def reward_func(pop):

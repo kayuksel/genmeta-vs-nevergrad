@@ -27,8 +27,9 @@ ratings_df = pd.read_csv("ratings.dat", sep="::", header=None, names=["userId", 
 
 n_users = ratings_df['userId'].nunique()
 n_items = ratings_df['movieId'].max()
-rank = 64
+rank = 50
 args.funcd = (n_users + n_items) * rank
+print(args.funcd)
 
 data = np.zeros((n_users, n_items))
 for row in ratings_df.itertuples():
@@ -140,6 +141,8 @@ best_reward = None
 
 start = time.time()
 
+from entmax import sparsemax
+
 for epoch in range(args.iter):
     torch.cuda.empty_cache()
     opt_A.zero_grad()
@@ -166,13 +169,16 @@ for epoch in range(args.iter):
         recov, indices = torch.topk(recov, k, dim=1, largest=True, sorted=True)
         sorted_data = torch.gather(data, dim=1, index=indices)
 
-        recov = (recov.sigmoid() > 0.5).float()
-        f1 = f1_score(sorted_data.flatten().cpu(), recov.flatten().cpu(), average='binary')
+        recov = (recov.sigmoid() > 0.5).float().cpu()
+        
+        f1k = f1_score(sorted_data.flatten().cpu(), recov.flatten(), average='binary').item()
+        f10 = f1_score(sorted_data[:,:10].flatten().cpu(), recov[:,:10].flatten(), average='binary').item()
 
-        ndcg = ndcg_binary(sorted_data.cpu())
+        ndcg = ndcg_binary(sorted_data.cpu()).item()
+        ndcg_10 = ndcg_binary(sorted_data[:,:10].cpu()).item()
 
-        print('gen-meta epoch: %i bce: %f f1 @ %i: %f ncdg @ %i: %f time: %f' % (
-            epoch, best_reward.item(), k, f1, k, ndcg.item(), (time.time() - start)))
+        print('gen-meta epoch: %i bce: %f f1@10: %f ncdg@10: %f f1@%i: %f ncdg@%i: %f time: %f' % (
+            epoch, best_reward.item(), f10, ndcg_10, k, f1k, k, ndcg, (time.time() - start)))
 
         if (epoch % 10) == 0:
             col = data.mean(dim=1) / data.std(dim=1)

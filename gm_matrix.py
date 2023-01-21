@@ -24,23 +24,17 @@ tsne = TSNE(n_components=2,  init='pca', learning_rate = 'auto', metric = 'cosin
 
 ratings_df = pd.read_csv("ratings.dat", sep="::", header=None, names=["userId", "movieId", "rating", "timestamp"], engine='python')
 
-# Create a binary matrix where 1 indicates that a movie has been watched and 0 otherwise
 n_users = ratings_df['userId'].nunique()
 n_items = ratings_df['movieId'].max()
 rank = 64
 args.funcd = (n_users + n_items) * rank
 num_chunks = math.ceil(len(data) / 512)
 
-print(n_users)
-print(n_items)
-
 data = np.zeros((n_users, n_items))
 for row in ratings_df.itertuples():
     data[row[1]-1, row[2]-1] = 1
 
 data = torch.from_numpy(data).float().cuda()
-
-# drop all zero rows
 data = data[~(data==0).all(axis=1)]
 
 pos_weight = (1.0-data.mean()) / data.mean() 
@@ -159,7 +153,6 @@ for epoch in range(args.iter):
         best_reward = rewards[min_index]
 
         row = action[min_index]
-
         m_pop = row[:n_users*rank].reshape(-1, rank)
         u_pop = row[-n_items*rank:].reshape(-1, rank).T
         recov = m_pop @ u_pop
@@ -170,18 +163,15 @@ for epoch in range(args.iter):
         sorted_data = torch.gather(data, dim=1, index=indices)
 
         recov = (recov.sigmoid() > 0.5).float()
-        # calculate the weighted F1 score
         f1 = f1_score(sorted_data.flatten().cpu(), recov.flatten().cpu(), average='binary')
 
         print('gen-meta epoch: %i bce: %f f1 @ %i: %f time: %f' % (epoch, best_reward.item(), k, f1, (time.time() - start)))
 
         if (epoch % 10) == 0:
             col = data.mean(dim=1) / data.std(dim=1)
-        
             m_tsne = tsne.fit_transform(m_pop.cpu())
             plot_tsne('users_tsne.png', m_tsne, col.cpu())
 
             col = data.mean(dim=0) / data.std(dim=0)
-            
             u_tsne = tsne.fit_transform(u_pop.T.cpu())
             plot_tsne('movies_tsne.png', u_tsne, col.cpu())

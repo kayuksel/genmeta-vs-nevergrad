@@ -29,6 +29,7 @@ n_users = ratings_df['userId'].nunique()
 n_items = ratings_df['movieId'].max()
 rank = 64
 args.funcd = (n_users + n_items) * rank
+num_chunks = math.ceil(len(data) / 512)
 
 print(n_users)
 print(n_items)
@@ -45,19 +46,13 @@ data = data[~(data==0).all(axis=1)]
 pos_weight = (1.0-data.mean()) / data.mean() 
 
 def reward_func(pop):
-
-    bs = 1000
-    num_chunks = math.ceil(len(data) / bs)
-
     rewards = []
     for row in pop:
-
         m_pop = row[:n_users*rank].reshape(-1, rank)
         u_pop = row[-n_items*rank:].reshape(-1, rank).T
         recov = m_pop @ u_pop
 
         recon_loss = 0
-
         for i in range(num_chunks):
             data_batch = data[i*bs:(i+1)*bs]
             recov_batch = recov[i*bs:(i+1)*bs]
@@ -66,11 +61,8 @@ def reward_func(pop):
             recon_loss += batch_loss
 
         recon_loss /= num_chunks
-
         rewards.append(recon_loss)
-
     return torch.stack(rewards)
-
 
 def init_weights(model):
     for m in model.modules():

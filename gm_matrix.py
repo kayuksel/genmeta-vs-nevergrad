@@ -1,4 +1,4 @@
-import os, time, math
+import time, math, pdb
 import pandas as pd
 import numpy as np
 from argparse import ArgumentParser
@@ -6,7 +6,7 @@ parser = ArgumentParser(description='Input parameters for Generative Meta-Learni
 parser.add_argument('--noise', default=16, type=int, help='Number of Noise Variables for Gen-Meta')
 parser.add_argument('--cnndim', default=2, type=int, help='Size of Latent Dimensions for Gen-Meta')
 parser.add_argument('--funcd', default=100000, type=int, help='Size of Benchmark Function Dimensions')
-parser.add_argument('--iter', default=150, type=int, help='Number of Total Iterations for Solver')
+parser.add_argument('--iter', default=10000, type=int, help='Number of Total Iterations for Solver')
 parser.add_argument('--batch', default=64, type=int, help='Number of Evaluations in an Iteration')
 parser.add_argument('--rseed', default=2, type=int, help='Random Seed for Network Initialization')
 args = parser.parse_args()
@@ -16,6 +16,11 @@ from gm_utils import *
 torch.backends.cudnn.deterministic = True
 torch.backends.cudnn.benchmark = False
 from sklearn.metrics import f1_score
+from sklearn.manifold import TSNE
+import matplotlib.pyplot as plt
+from matplotlib.colors import Normalize
+
+tsne = TSNE(n_components=2,  init='pca', learning_rate = 'auto', metric = 'cosine')
 
 ratings_df = pd.read_csv("ratings.dat", sep="::", header=None, names=["userId", "movieId", "rating", "timestamp"], engine='python')
 
@@ -123,6 +128,20 @@ class Generator(nn.Module):
         mu = self.model(self.extract(x))
         return mu + (self.std_weight * torch.randn_like(mu))
 
+def plot_tsne(name, xy, colors=None, alpha=0.25, figsize=(12,12), s=1.0):
+    plt.clf()
+    plt.figure(figsize=figsize, facecolor='white')
+    plt.margins(0)
+    plt.axis('off')
+    norm = Normalize(vmin=min(colors), vmax=max(colors))
+    fig = plt.scatter(xy[:,0], xy[:,1],
+                c = colors,
+                norm = norm,
+                cmap = 'cool',
+                alpha=alpha, # set alpha of markers
+                lw=0), # don't use edges
+    plt.savefig(name, bbox_inches='tight')
+
 torch.manual_seed(args.rseed)
 torch.cuda.manual_seed(args.rseed)
 actor = Generator(args.noise).cuda()
@@ -153,8 +172,24 @@ for epoch in range(args.iter):
         u_pop = row[-n_items*rank:].reshape(-1, rank).T
         recov = m_pop @ u_pop
 
+        k = data.sum(dim=1).mean().int()
+
+        recov, indices = torch.topk(recov, k, dim=1, largest=True, sorted=True)
+        sorted_data = torch.gather(data, dim=1, index=indices)
+
         recov = (recov.sigmoid() > 0.5).float()
         # calculate the weighted F1 score
-        f1 = f1_score(data.flatten().cpu(), recov.flatten().cpu(), average='binary')
+        f1 = f1_score(sorted_data.flatten().cpu(), recov.flatten().cpu(), average='binary')
 
-        print('gen-meta epoch: %i bce: %f f1: %f time: %f' % (epoch, best_reward.item(), f1, (time.time() - start)))
+        print('gen-meta epoch: %i bce: %f f1 @ %i: %f time: %f' % (epoch, best_reward.item(), k, f1, (time.time() - start)))
+
+        if (epoch % 10) == 0:
+            col = data.mean(dim=1) / data.std(dim=1)
+        
+            m_tsne = tsne.fit_transform(m_pop.cpu())
+            plot_tsne('users_tsne.png', m_tsne, col.cpu())
+
+            col = data.mean(dim=0) / data.std(dim=0)
+            
+            u_tsne = tsne.fit_transform(u_pop.T.cpu())
+            plot_tsne('movies_tsne.png', u_tsne, col.cpu())

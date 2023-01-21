@@ -28,7 +28,6 @@ n_users = ratings_df['userId'].nunique()
 n_items = ratings_df['movieId'].max()
 rank = 64
 args.funcd = (n_users + n_items) * rank
-num_chunks = math.ceil(len(data) / 512)
 
 data = np.zeros((n_users, n_items))
 for row in ratings_df.itertuples():
@@ -36,7 +35,7 @@ for row in ratings_df.itertuples():
 
 data = torch.from_numpy(data).float().cuda()
 data = data[~(data==0).all(axis=1)]
-
+num_chunks = math.ceil(len(data) / 512)
 pos_weight = (1.0-data.mean()) / data.mean() 
 
 def reward_func(pop):

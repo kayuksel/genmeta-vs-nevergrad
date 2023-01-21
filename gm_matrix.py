@@ -1,4 +1,4 @@
-import os, time, pdb
+import time, math
 import pandas as pd
 import numpy as np
 from argparse import ArgumentParser
@@ -7,7 +7,7 @@ parser.add_argument('--noise', default=16, type=int, help='Number of Noise Varia
 parser.add_argument('--cnndim', default=2, type=int, help='Size of Latent Dimensions for Gen-Meta')
 parser.add_argument('--funcd', default=100000, type=int, help='Size of Benchmark Function Dimensions')
 parser.add_argument('--iter', default=150, type=int, help='Number of Total Iterations for Solver')
-parser.add_argument('--batch', default=500, type=int, help='Number of Evaluations in an Iteration')
+parser.add_argument('--batch', default=128, type=int, help='Number of Evaluations in an Iteration')
 parser.add_argument('--rseed', default=2, type=int, help='Random Seed for Network Initialization')
 args = parser.parse_args()
 import torch
@@ -17,13 +17,13 @@ torch.backends.cudnn.deterministic = True
 torch.backends.cudnn.benchmark = False
 from sklearn.metrics import f1_score
 
-ratings_df = pd.read_csv("u.data", sep="\t", header=None, names=["userId", "movieId", "rating", "timestamp"], engine='python')
+ratings_df = pd.read_csv("ratings.dat", sep="::", header=None, names=["userId", "movieId", "rating", "timestamp"], engine='python')
 
 # Create a binary matrix where 1 indicates that a movie has been watched and 0 otherwise
 n_users = ratings_df['userId'].nunique()
 n_items = ratings_df['movieId'].max()
-rank = 40
-func_dim = (n_users + n_items) * rank
+rank = 50
+args.funcd = (n_users + n_items) * rank
 
 print(n_users)
 print(n_items)
@@ -41,14 +41,26 @@ pos_weight = (1.0-data.mean()) / data.mean()
 
 def reward_func(pop):
 
+    bs = 1000
+    num_chunks = math.ceil(len(data) / bs)
+
     rewards = []
     for row in pop:
 
         m_pop = row[:n_users*rank].reshape(-1, rank)
         u_pop = row[-n_items*rank:].reshape(-1, rank).T
         recov = m_pop @ u_pop
-        recon_loss = nn.functional.binary_cross_entropy_with_logits(
-            recov, data, pos_weight = pos_weight, reduction='mean')
+
+        recon_loss = 0
+
+        for i in range(num_chunks):
+            data_batch = data[i*bs:(i+1)*bs]
+            recov_batch = recov[i*bs:(i+1)*bs]
+            batch_loss = nn.functional.binary_cross_entropy_with_logits(
+                recov_batch, data_batch, pos_weight=pos_weight, reduction='mean')
+            recon_loss += batch_loss
+
+        recon_loss /= num_chunks
 
         rewards.append(recon_loss)
 

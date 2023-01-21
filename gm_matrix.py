@@ -113,18 +113,14 @@ class Generator(nn.Module):
         mu = self.model(self.extract(x))
         return mu + (self.std_weight * torch.randn_like(mu))
 
-def plot_tsne(name, xy, colors=None, alpha=0.25, figsize=(12,12), s=1.0):
+def plot_tsne(name, xy, colors=None, alpha=0.25):
     plt.clf()
-    plt.figure(figsize=figsize, facecolor='white')
+    plt.figure(figsize=(12,12), facecolor='white')
     plt.margins(0)
     plt.axis('off')
     norm = Normalize(vmin=min(colors), vmax=max(colors))
-    fig = plt.scatter(xy[:,0], xy[:,1],
-                c = colors,
-                norm = norm,
-                cmap = 'cool',
-                alpha=alpha, # set alpha of markers
-                lw=0), # don't use edges
+    fig = plt.scatter(xy[:,0], xy[:,1], c = colors, 
+        norm = norm, cmap = 'cool',alpha= 0.25, lw=0)
     plt.savefig(name, bbox_inches='tight')
 
 torch.manual_seed(args.rseed)
